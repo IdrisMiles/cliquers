@@ -44,3 +44,5 @@ assert_eq!(
 ## Origin
 
 This library is a direct port of the fantastic Python module [Clique](https://gitlab.com/4degrees/clique).
+
+This is still a work in progress, so is not a complete port... yet!
