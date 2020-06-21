@@ -32,16 +32,13 @@ pub fn assemble<T: AsRef<str>>(
         let mut matched = false;
 
         for pattern in compiled_patterns.iter() {
-
             for captures in pattern.captures_iter(item.as_ref()) {
                 let index_match = captures.name("index").unwrap();
                 let head = &item.as_ref()[..index_match.start()];
                 let tail = &item.as_ref()[index_match.end()..];
 
                 let padding = match captures.name("padding") {
-                    Some(c) => {
-                        index_match.range().count() as i32
-                    }
+                    Some(c) => index_match.range().count() as i32,
                     None => 0,
                 };
 
@@ -151,7 +148,7 @@ pub fn assemble<T: AsRef<str>>(
         let mut has_membership = false;
 
         for collection in filtered.iter() {
-            if collection.contains(candidate.to_string()) {
+            if collection.contains(&candidate) {
                 has_membership = true;
                 break;
             }
@@ -188,18 +185,15 @@ mod tests {
     #[test]
     fn test_assemble_single_sequence() {
         let files = vec![
-            "/show/sequence/shot/task/main_v001/render.1001.exr",
-            "/show/sequence/shot/task/main_v001/render.1002.exr",
-            "/show/sequence/shot/task/main_v001/render.1003.exr",
-            "/show/sequence/shot/task/main_v001/render.1004.exr",
-            "/show/sequence/shot/task/main_v001/render.1005.exr",
+            "shot/task/main_v001/render.1001.exr",
+            "shot/task/main_v001/render.1002.exr",
+            "shot/task/main_v001/render.1003.exr",
+            "shot/task/main_v001/render.1004.exr",
+            "shot/task/main_v001/render.1005.exr",
         ];
         let collections = assemble(&files, None);
         assert_eq!(collections.len(), 1);
-        assert_eq!(
-            collections[0].head,
-            "/show/sequence/shot/task/main_v001/render."
-        );
+        assert_eq!(collections[0].head, "shot/task/main_v001/render.");
         assert_eq!(collections[0].tail, ".exr");
         assert_eq!(collections[0].padding, 4);
         assert_eq!(collections[0].indexes, vec![1001, 1002, 1003, 1004, 1005]);
@@ -208,28 +202,28 @@ mod tests {
     #[test]
     fn test_assemble_multiple_sequence() {
         let files = vec![
-            "/show/sequence/shot/task/main_v001/render.1001.exr",
-            "/show/sequence/shot/task/main_v001/render.1002.exr",
-            "/show/sequence/shot/task/main_v001/render.1003.exr",
-            "/show/sequence/shot/task/main_v001/render.1004.exr",
-            "/show/sequence/shot/task/main_v001/render.1005.exr",
-            "/show/sequence/shot/task/main_v002/render.1001.exr",
-            "/show/sequence/shot/task/main_v002/render.1002.exr",
-            "/show/sequence/shot/task/main_v002/render.1003.exr",
-            "/show/sequence/shot/task/main_v002/render.1004.exr",
-            "/show/sequence/shot/task/main_v002/render.1005.exr",
+            "shot/task/main_v001/render.1001.exr",
+            "shot/task/main_v001/render.1002.exr",
+            "shot/task/main_v001/render.1003.exr",
+            "shot/task/main_v001/render.1004.exr",
+            "shot/task/main_v001/render.1005.exr",
+            "shot/task/main_v002/render.1001.exr",
+            "shot/task/main_v002/render.1002.exr",
+            "shot/task/main_v002/render.1003.exr",
+            "shot/task/main_v002/render.1004.exr",
+            "shot/task/main_v002/render.1005.exr",
         ];
         let collections = assemble(&files, None);
 
         assert_eq!(collections.len(), 2);
         let v1 = Collection::new(
-            "/show/sequence/shot/task/main_v001/render.".to_string(),
+            "shot/task/main_v001/render.".to_string(),
             ".exr".to_string(),
             4,
             vec![1001, 1002, 1003, 1004, 1005],
         );
         let v2 = Collection::new(
-            "/show/sequence/shot/task/main_v002/render.".to_string(),
+            "shot/task/main_v002/render.".to_string(),
             ".exr".to_string(),
             4,
             vec![1001, 1002, 1003, 1004, 1005],
@@ -241,26 +235,26 @@ mod tests {
     #[test]
     fn test_assemble_broken_sequence() {
         let files = vec![
-            "/show/sequence/shot/task/main_v001/render.1001.exr",
-            "/show/sequence/shot/task/main_v001/render.1002.exr",
-            "/show/sequence/shot/task/main_v001/render.1003.exr",
-            "/show/sequence/shot/task/main_v001/render.1005.exr",
-            "/show/sequence/shot/task/main_v002/render.1001.exr",
-            "/show/sequence/shot/task/main_v002/render.1002.exr",
-            "/show/sequence/shot/task/main_v002/render.1004.exr",
-            "/show/sequence/shot/task/main_v002/render.1005.exr",
+            "shot/task/main_v001/render.1001.exr",
+            "shot/task/main_v001/render.1002.exr",
+            "shot/task/main_v001/render.1003.exr",
+            "shot/task/main_v001/render.1005.exr",
+            "shot/task/main_v002/render.1001.exr",
+            "shot/task/main_v002/render.1002.exr",
+            "shot/task/main_v002/render.1004.exr",
+            "shot/task/main_v002/render.1005.exr",
         ];
         let collections = assemble(&files, None);
 
         assert_eq!(collections.len(), 2);
         let v1 = Collection::new(
-            "/show/sequence/shot/task/main_v001/render.".to_string(),
+            "shot/task/main_v001/render.".to_string(),
             ".exr".to_string(),
             4,
             vec![1001, 1002, 1003, 1005],
         );
         let v2 = Collection::new(
-            "/show/sequence/shot/task/main_v002/render.".to_string(),
+            "shot/task/main_v002/render.".to_string(),
             ".exr".to_string(),
             4,
             vec![1001, 1002, 1004, 1005],
@@ -274,23 +268,23 @@ mod tests {
         let mut indexes = vec![];
         let mut files = vec![];
         for i in 1..9999 {
-            files.push(format!("/show/sequence/shot/task/main_v001/render.{:04}.exr", i));
-            files.push(format!("/show/sequence/shot/task/main_v002/render.{:04}.exr", i));
-            files.push(format!("/show/sequence/shot/task/main_v003/render.{:04}.exr", i));
-            files.push(format!("/show/sequence/shot/task/main_v004/render.{:04}.exr", i));
-            files.push(format!("/show/sequence/shot/task/main_v005/render.{:04}.exr", i));
+            files.push(format!("shot/task/main_v001/render.{:04}.exr", i));
+            files.push(format!("shot/task/main_v002/render.{:04}.exr", i));
+            files.push(format!("shot/task/main_v003/render.{:04}.exr", i));
+            files.push(format!("shot/task/main_v004/render.{:04}.exr", i));
+            files.push(format!("shot/task/main_v005/render.{:04}.exr", i));
             indexes.push(i);
         }
         let collections = assemble(&files, None);
 
         let v1 = Collection::new(
-            "/show/sequence/shot/task/main_v001/render.".to_string(),
+            "shot/task/main_v001/render.".to_string(),
             ".exr".to_string(),
             4,
             indexes.to_owned(),
         );
         let v2 = Collection::new(
-            "/show/sequence/shot/task/main_v002/render.".to_string(),
+            "shot/task/main_v002/render.".to_string(),
             ".exr".to_string(),
             4,
             indexes,
@@ -298,6 +292,4 @@ mod tests {
         assert_eq!(collections.contains(&v1), true);
         assert_eq!(collections.contains(&v2), true);
     }
-
-    
 }

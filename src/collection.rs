@@ -1,3 +1,4 @@
+use regex::{Captures, Regex};
 use std::collections::HashMap;
 use strfmt::strfmt;
 
@@ -43,9 +44,38 @@ impl Collection {
         }
     }
 
-    pub fn contains(self: &Self, item: String) -> bool {
+    pub fn match_item<'t>(self: &Self, item: &'t String) -> Option<Captures<'t>> {
+        let regex_str = format!(
+            "^{0}(?P<index>(?P<padding>0*)\\d+?){1}$",
+            self.head, self.tail
+        );
+        let compiled_regex: Regex = Regex::new(regex_str.as_str()).unwrap();
+        let regex_match = compiled_regex.captures(item);
+        match regex_match {
+            None => return None,
+            Some(capture) => {
+                let index = capture.name("index").unwrap().as_str();
+                let mut padded = false;
+                match capture.name("padding") {
+                    Some(m) => padded = true,
+                    None => (),
+                };
+
+                if self.padding == 0 && padded {
+                    return None;
+                }
+                if index.chars().count() != self.padding as usize {
+                    return None;
+                }
+                Some(capture)
+            }
+        }
+    }
+
+    // Return whether an item exists within the collection
+    pub fn contains(self: &Self, item: &String) -> bool {
         for i in self.into_iter() {
-            if i == item {
+            if i == *item {
                 return true;
             }
         }
@@ -53,7 +83,7 @@ impl Collection {
     }
 
     // Return whether entire collection is contiguous.
-    pub fn is_contiguous(self) -> bool {
+    pub fn is_contiguous(self: &Self) -> bool {
         let mut previous = None;
         for index in self.indexes.iter() {
             match previous {
@@ -74,7 +104,7 @@ impl Collection {
     }
 
     // Return holes in collection.
-    pub fn holes(self) -> Collection {
+    pub fn holes(self: &Self) -> Collection {
         let mut missing = vec![];
         let mut previous = None;
         for index in self.indexes.iter() {
@@ -92,10 +122,17 @@ impl Collection {
             previous = Some(index);
         }
 
-        return Collection::new(self.head, self.tail, self.padding, missing);
+        return Collection::new(
+            self.head.to_owned(),
+            self.tail.to_owned(),
+            self.padding,
+            missing,
+        );
     }
 }
 
+// ------------------------------------------------------------------------------
+// Consuming iterator
 // implementing into_iter
 impl IntoIterator for Collection {
     type Item = String;
@@ -142,7 +179,8 @@ impl Iterator for IntoIteratorHelper {
     }
 }
 
-// ---------------------------------
+// ------------------------------------------------------------------------------
+// Non consuming iterator
 pub struct IterHelper<'a> {
     iter: ::std::slice::Iter<'a, i32>,
     head: String,
@@ -191,11 +229,6 @@ impl<'a> Iterator for IterHelper<'a> {
             None => None,
         }
     }
-
-    // // just return the str reference
-    // fn next(&mut self) -> Option<Self::Item> {
-    //         self.iter.next()
-    // }
 }
 
 #[cfg(test)]
@@ -218,6 +251,30 @@ mod tests {
         );
         assert_eq!(c.format(Some("{head}%0{padding}d{tail}")), "head.%04d.tail");
         assert_eq!(c.format(Some("{head}%0{padding}d{tail} {FOO}")), "");
+    }
+
+    #[test]
+    fn test_match() {
+        let c = Collection::new(
+            "head.".to_string(),
+            ".tail".to_string(),
+            4,
+            vec![1001, 1002, 1003, 1004, 1005],
+        );
+
+        // probably dodgy way of testing...
+        match c.match_item(&"head.1010.tail".to_string()) {
+            Some(m) => assert_eq!(m.name("index").unwrap().as_str(), "1010"),
+            None => assert_eq!(false, true),
+        }
+        match c.match_item(&"head.10100.tail".to_string()) {
+            Some(_) => assert_eq!(false, true),
+            None => assert_eq!(true, true),
+        }
+        match c.match_item(&"foo.1010.tail".to_string()) {
+            Some(_) => assert_eq!(false, true),
+            None => assert_eq!(true, true),
+        }
     }
 
     #[test]
