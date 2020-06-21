@@ -1,4 +1,4 @@
-use regex::{self, CaptureMatches, Captures, Regex};
+use regex::Regex;
 use std::collections::HashMap;
 mod collection;
 use collection::Collection;
@@ -12,7 +12,6 @@ pub fn assemble<T: AsRef<str>>(
     iterable: &Vec<T>,
     patterns: Option<Vec<String>>,
 ) -> Vec<Collection> {
-    let compiled_pattern: Regex = Regex::new(DIGITS_PATTERN).unwrap();
     let mut compiled_patterns: Vec<Regex> = vec![];
     let mut collection_map: HashMap<(String, String, i32), Vec<i32>> = HashMap::new();
     let mut remainder: Vec<String> = Vec::new();
@@ -38,7 +37,7 @@ pub fn assemble<T: AsRef<str>>(
                 let tail = &item.as_ref()[index_match.end()..];
 
                 let padding = match captures.name("padding") {
-                    Some(c) => index_match.range().count() as i32,
+                    Some(_) => index_match.range().count() as i32,
                     None => 0,
                 };
 
@@ -58,7 +57,7 @@ pub fn assemble<T: AsRef<str>>(
     }
 
     // sort the indexes in the collection map
-    for (k, v) in collection_map.iter_mut() {
+    for (_k, v) in collection_map.iter_mut() {
         v.sort();
     }
 

@@ -57,7 +57,7 @@ impl Collection {
                 let index = capture.name("index").unwrap().as_str();
                 let mut padded = false;
                 match capture.name("padding") {
-                    Some(m) => padded = true,
+                    Some(_) => padded = true,
                     None => (),
                 };
 
