@@ -3,6 +3,11 @@ name = "cliquers"
 version = "0.1.0"
 authors = ["IdrisMiles <idris.miles@gmail.com>"]
 edition = "2018"
+description = "Manage filesequences with a common numeric component"
+readme = "README.md"
+homepage = "https://github.com/IdrisMiles/cliquers"
+repository = "https://github.com/IdrisMiles/cliquers"
+keywords = ["filesequence", "vfx", "clique"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
