@@ -5,8 +5,8 @@ authors = ["IdrisMiles <idris.miles@gmail.com>"]
 edition = "2018"
 description = "Manage filesequences with a common numeric component"
 readme = "README.md"
-homepage = "https://github.com/IdrisMiles/cliquers"
 repository = "https://github.com/IdrisMiles/cliquers"
+license = "Apache-2.0"
 keywords = ["filesequence", "vfx", "clique"]
 categories = ["data-structures"]
 
