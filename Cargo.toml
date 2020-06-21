@@ -6,6 +6,7 @@ edition = "2018"
 description = "Manage filesequences with a common numeric component"
 readme = "README.md"
 repository = "https://github.com/IdrisMiles/cliquers"
+documentation = "https://docs.rs/cliquers/0.0.1/cliquers"
 license = "Apache-2.0"
 keywords = ["filesequence", "vfx", "clique"]
 categories = ["data-structures"]
