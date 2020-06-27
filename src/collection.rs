@@ -4,8 +4,6 @@ use strfmt::strfmt;
 
 #[derive(Debug, PartialEq)]
 pub struct Collection {
-    curr: usize,
-    end: usize,
     pub head: String,
     pub tail: String,
     pub padding: i32,
@@ -15,8 +13,6 @@ pub struct Collection {
 impl Collection {
     pub fn new(head: String, tail: String, padding: i32, indexes: Vec<i32>) -> Collection {
         Collection {
-            curr: 0,
-            end: indexes.len(),
             head: head,
             tail: tail,
             padding: padding,
@@ -162,7 +158,8 @@ impl Iterator for IntoIteratorHelper {
             Some(index) => {
                 let mut vars = HashMap::new();
                 let padding: usize = self.padding as usize;
-                let index = format!("{:0padding$}", index.to_string(), padding = padding);
+                let index = format!("{:0>padding$}", index.to_string(), padding = padding);
+                println!("{}", index);
 
                 vars.insert("head".to_string(), self.head.as_str());
                 vars.insert("tail".to_string(), self.tail.as_str());
@@ -384,6 +381,11 @@ mod tests {
         assert_eq!(iter.next(), Some("head.1002.tail".to_string()));
         assert_eq!(iter.next(), Some("head.1004.tail".to_string()));
         assert_eq!(iter.next(), Some("head.1005.tail".to_string()));
+        assert_eq!(iter.next(), None);
+
+        let c1 = Collection::new("head.".to_string(), ".tail".to_string(), 5, vec![23]);
+        let mut iter = c1.into_iter();
+        assert_eq!(iter.next(), Some("head.00023.tail".to_string()));
         assert_eq!(iter.next(), None);
     }
 }

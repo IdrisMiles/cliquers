@@ -1,17 +1,13 @@
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
 mod collection;
 use collection::Collection;
 
-static DIGITS_PATTERN: &'static str = "(?P<index>(?P<padding>0*)\\d+)";
-// static mut PATTERNS = HashMap::new();
-// PATTERNS.insert("frames": format!("\\.{0}\\.\\D+\\d?$", &DIGITS_PATTERN));
-// PATTERNS.insert("versions": format!("v{0}", DIGITS_PATTERN));
-
 pub fn assemble<T: AsRef<str>>(
     iterable: &Vec<T>,
     patterns: Option<Vec<String>>,
-) -> Vec<Collection> {
+) -> (Vec<Collection>, Vec<String>) {
     let mut compiled_patterns: Vec<Regex> = vec![];
     let mut collection_map: HashMap<(String, String, i32), Vec<i32>> = HashMap::new();
     let mut remainder: Vec<String> = Vec::new();
@@ -23,7 +19,11 @@ pub fn assemble<T: AsRef<str>>(
             }
         }
         None => {
-            compiled_patterns.push(Regex::new(DIGITS_PATTERN).unwrap());
+            lazy_static! {
+                static ref DIGITS_PATTERN: Regex =
+                    Regex::new("(?P<index>(?P<padding>0*)\\d+)").unwrap();
+            }
+            compiled_patterns.push(DIGITS_PATTERN.to_owned());
         }
     }
 
@@ -52,6 +52,7 @@ pub fn assemble<T: AsRef<str>>(
             }
         }
         if !matched {
+            println!("not matched: {}", item.as_ref());
             remainder.push(item.as_ref().to_string());
         }
     }
@@ -126,17 +127,12 @@ pub fn assemble<T: AsRef<str>>(
         if collection.indexes.len() > minimum_items {
             filtered.push(collection);
         } else {
-            for member in collection.indexes.iter() {
-                let head = "{head}".to_owned();
-                let index = member.to_string();
-                let tail = "{tail";
-                let fmt = head + index.as_str() + tail;
-                remainder_candidates.push(collection.format(Some(fmt.as_str())));
+            for member in collection.into_iter() {
+                remainder_candidates.push(member);
             }
         }
     }
 
-    // ###############
     for candidate in remainder_candidates.into_iter() {
         // Check if candidate has already been added to remainder to avoid
         // duplicate entries.
@@ -158,27 +154,27 @@ pub fn assemble<T: AsRef<str>>(
         }
     }
 
-    // ###############
-    // Set padding for all ambiguous collections according to the
-    // assume_padded_when_ambiguous setting.
+    // // Set padding for all ambiguous collections according to the
+    // // assume_padded_when_ambiguous setting.
     // let assume_padded_when_ambiguous = false;
     // if assume_padded_when_ambiguous {
-    //     for collection in filtered.iter(){
-    //         if !collection.padding && collection.indexes {
-    //             indexes = list(collection.indexes)
-    //             first_index_width = len(str(indexes[0]))
-    //             last_index_width = len(str(indexes[-1]))
-    //             if first_index_width == last_index_width{
-    //                 collection.padding = first_index_width
+    //     for collection in filtered.iter_mut() {
+    //         if collection.padding == 0 && collection.indexes.len() != 0 {
+    //             let start = collection.indexes[0].to_string();
+    //             let end = collection.indexes.last().unwrap().to_string();
+    //             let first_index_width = start.chars().count();
+    //             let last_index_width = end.chars().count();
+    //             if first_index_width == last_index_width {
+    //                 collection.padding = first_index_width as i32;
     //             }
     //         }
     //     }
     // }
 
-    return filtered;
+    return (filtered, remainder);
 }
 
-// #[cfg(test)]
+#[cfg(test)]
 mod tests {
     use super::*;
     #[test]
@@ -190,7 +186,7 @@ mod tests {
             "shot/task/main_v001/render.1004.exr",
             "shot/task/main_v001/render.1005.exr",
         ];
-        let collections = assemble(&files, None);
+        let (collections, _remainder) = assemble(&files, None);
         assert_eq!(collections.len(), 1);
         assert_eq!(collections[0].head, "shot/task/main_v001/render.");
         assert_eq!(collections[0].tail, ".exr");
@@ -212,7 +208,7 @@ mod tests {
             "shot/task/main_v002/render.1004.exr",
             "shot/task/main_v002/render.1005.exr",
         ];
-        let collections = assemble(&files, None);
+        let (collections, _remainder) = assemble(&files, None);
 
         assert_eq!(collections.len(), 2);
         let v1 = Collection::new(
@@ -243,7 +239,7 @@ mod tests {
             "shot/task/main_v002/render.1004.exr",
             "shot/task/main_v002/render.1005.exr",
         ];
-        let collections = assemble(&files, None);
+        let (collections, _remainder) = assemble(&files, None);
 
         assert_eq!(collections.len(), 2);
         let v1 = Collection::new(
@@ -274,7 +270,7 @@ mod tests {
             files.push(format!("shot/task/main_v005/render.{:04}.exr", i));
             indexes.push(i);
         }
-        let collections = assemble(&files, None);
+        let (collections, _remainder) = assemble(&files, None);
 
         let v1 = Collection::new(
             "shot/task/main_v001/render.".to_string(),
@@ -290,5 +286,26 @@ mod tests {
         );
         assert_eq!(collections.contains(&v1), true);
         assert_eq!(collections.contains(&v2), true);
+    }
+
+    #[test]
+    fn test_assemble_remainder() {
+        let files = vec![
+            "shot/task/main_v001/render.1001.exr",
+            "shot/task/main_v001/render.1002.exr",
+            "shot/task/main_v001/render.1003.exr",
+            "shot/task/main_v001/render.1004.exr",
+            "shot/task/main_v001/render.1005.exr",
+            "shot/task/main_v002/render.1005.exr",
+            "foo",
+        ];
+        let (collections, remainder) = assemble(&files, None);
+        assert_eq!(collections.len(), 1);
+        assert_eq!(remainder.len(), 2);
+        assert_eq!(
+            remainder.contains(&String::from("shot/task/main_v002/render.1005.exr")),
+            true
+        );
+        assert_eq!(remainder.contains(&String::from("foo")), true);
     }
 }

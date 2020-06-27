@@ -16,3 +16,4 @@ categories = ["data-structures"]
 [dependencies]
 regex = "1"
 strfmt = "0.1"
+lazy_static = "1.4.0"
