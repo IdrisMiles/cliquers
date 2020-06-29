@@ -1,6 +1,6 @@
 # Cliquers
 
-![crates.io](https://img.shields.io/crates/v/$CRATE.svg)
+![crates.io](https://img.shields.io/crates/v/cliquers.svg)
 
 Manage filesequences with a common numeric component in Rust.
 
