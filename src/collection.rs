@@ -22,21 +22,65 @@ impl Collection {
 
     // Return formatted string represented collection.
     pub fn format(self: &Self, fmt: Option<&str>) -> String {
-        let mut vars = HashMap::new();
-        let padding = self.padding.to_string();
+        let padding = format!("%0{}d", self.padding);
         let start = self.indexes[0].to_string();
         let end = self.indexes.last().unwrap().to_string();
+        let range = format!("{start}-{end}", start = start.as_str(), end = end.as_str());
+        let mut ranges = String::new();
+        let separated = self.separate();
+        if separated.len() > 1 {
+            ranges.clone_from(
+                &separated
+                    .iter()
+                    .map(|x| x.format(Some("{range}")))
+                    .collect::<Vec<String>>()
+                    .join(", "),
+            );
+        } else {
+            ranges.clone_from(&range);
+        }
 
-        vars.insert("head".to_string(), self.head.as_str());
-        vars.insert("padding".to_string(), padding.as_str());
-        vars.insert("tail".to_string(), self.tail.as_str());
-        vars.insert("start".to_string(), start.as_str());
-        vars.insert("end".to_string(), end.as_str());
+        match fmt {
+            Some(fmt) => {
+                let mut vars = HashMap::new();
+                let mut holes = String::new();
+                if fmt.contains("{holes}") {
+                    holes.clone_from(&self.holes().format(Some("{range}")));
+                    vars.insert("holes".to_string(), holes.as_str());
+                }
 
-        let fmt = fmt.unwrap_or("{head}%0{padding}d{tail} [{start}-{end}]");
-        match strfmt(&fmt, &vars) {
-            Ok(string) => string,
-            Err(_) => "".to_string(),
+                if fmt.contains("{range}") || fmt.contains("{ranges}") {
+                    let indexes_count = self.indexes.len();
+                    if indexes_count == 0 {
+                        vars.insert("range".to_string(), "");
+                    } else if indexes_count == 1 {
+                        vars.insert("range".to_string(), start.as_str());
+                    } else {
+                        vars.insert("range".to_string(), range.as_str());
+                    }
+                }
+                if fmt.contains("{ranges}") {
+                    vars.insert("ranges".to_string(), ranges.as_str());
+                }
+
+                vars.insert("head".to_string(), self.head.as_str());
+                vars.insert("padding".to_string(), padding.as_str());
+                vars.insert("tail".to_string(), self.tail.as_str());
+                vars.insert("start".to_string(), start.as_str());
+                vars.insert("end".to_string(), end.as_str());
+
+                match strfmt(&fmt, &vars) {
+                    Ok(string) => string,
+                    Err(_) => "".to_string(),
+                }
+            }
+            None => format!(
+                "{head}{padding}{tail} [{ranges}]",
+                head = self.head.as_str(),
+                padding = padding.as_str(),
+                tail = self.tail.as_str(),
+                ranges = ranges.as_str(),
+            ),
         }
     }
 
@@ -124,6 +168,52 @@ impl Collection {
             self.padding,
             missing,
         );
+    }
+
+    // Return contiguous parts of collection as separate collections.
+    fn separate(self: &Self) -> Vec<Self> {
+        let mut collections = vec![];
+        let mut start = None;
+        let mut end = None;
+
+        for index in self.indexes.iter() {
+            if start == None {
+                start = Some(*index);
+                end = start;
+                continue;
+            }
+
+            if *index != (end.unwrap() + 1) {
+                collections.push(Collection::new(
+                    self.head.to_string(),
+                    self.tail.to_string(),
+                    self.padding,
+                    (start.unwrap()..end.unwrap() + 1).collect(),
+                ));
+
+                start = Some(*index);
+            }
+
+            end = Some(*index);
+        }
+
+        if start == None {
+            collections.push(Collection::new(
+                self.head.to_string(),
+                self.tail.to_string(),
+                self.padding,
+                vec![],
+            ))
+        } else {
+            collections.push(Collection::new(
+                self.head.to_string(),
+                self.tail.to_string(),
+                self.padding,
+                (start.unwrap()..end.unwrap() + 1).collect(),
+            ))
+        }
+
+        return collections;
     }
 }
 
@@ -243,11 +333,32 @@ mod tests {
 
         assert_eq!(c.format(None), "head.%04d.tail [1001-1005]");
         assert_eq!(
-            c.format(Some("{head}%0{padding}d{tail} [{start}-{end}]")),
+            c.format(Some("{head}{padding}{tail} [{range}]")),
             "head.%04d.tail [1001-1005]"
         );
-        assert_eq!(c.format(Some("{head}%0{padding}d{tail}")), "head.%04d.tail");
-        assert_eq!(c.format(Some("{head}%0{padding}d{tail} {FOO}")), "");
+        assert_eq!(
+            c.format(Some("{head}{padding}{tail} [{ranges}]")),
+            "head.%04d.tail [1001-1005]"
+        );
+        assert_eq!(c.format(Some("{head}{padding}{tail}")), "head.%04d.tail");
+        assert_eq!(c.format(Some("{head}{padding}{tail} {FOO}")), "");
+
+        let c = Collection::new(
+            "head.".to_string(),
+            ".tail".to_string(),
+            4,
+            vec![1001, 1002, 1003, 1005],
+        );
+        assert_eq!(c.format(Some("{holes}")), "1004");
+        assert_eq!(c.format(None), "head.%04d.tail [1001-1003, 1005]");
+        assert_eq!(
+            c.format(Some("{head}{padding}{tail} [{range}]")),
+            "head.%04d.tail [1001-1005]"
+        );
+        assert_eq!(
+            c.format(Some("{head}{padding}{tail} [{ranges}]")),
+            "head.%04d.tail [1001-1003, 1005]"
+        );
     }
 
     #[test]
@@ -326,6 +437,34 @@ mod tests {
             vec![1006, 1007, 1009],
         );
         assert_eq!(c.holes(), expected);
+    }
+
+    #[test]
+    fn test_seperate() {
+        let c1 = Collection::new(
+            "head.".to_string(),
+            ".tail".to_string(),
+            4,
+            vec![1001, 1002, 1003, 1004, 1005],
+        );
+        assert_eq!(c1.separate()[0], c1);
+
+        let c1 = Collection::new(
+            "head.".to_string(),
+            ".tail".to_string(),
+            4,
+            vec![1001, 1002, 1003, 1005],
+        );
+        let expected = vec![
+            Collection::new(
+                "head.".to_string(),
+                ".tail".to_string(),
+                4,
+                vec![1001, 1002, 1003],
+            ),
+            Collection::new("head.".to_string(), ".tail".to_string(), 4, vec![1005]),
+        ];
+        assert_eq!(c1.separate(), expected);
     }
 
     #[test]
