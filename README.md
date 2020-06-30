@@ -7,7 +7,7 @@ Manage filesequences with a common numeric component in Rust.
 ## Usage
 
 ```rust
-use cliquers
+use cliquers;
 
 let files = vec![
     "/shot/task/main/render.1001.exr",
