@@ -4,6 +4,11 @@ use std::collections::HashMap;
 mod collection;
 use collection::Collection;
 
+static DIGITS_PATTERN: &str = "(?P<index>(?P<padding>0*)\\d+)";
+static FRAME_PATTERN: &str = "\\.(?P<index>(?P<padding>0*)\\d+)\\.\\D+\\d?$";
+static VERSION_PATTERN: &str = "v(?P<index>(?P<padding>0*)\\d+)";
+
+
 pub fn assemble<T: AsRef<str>>(
     iterable: &Vec<T>,
     patterns: Option<Vec<String>>,
@@ -20,10 +25,10 @@ pub fn assemble<T: AsRef<str>>(
         }
         None => {
             lazy_static! {
-                static ref DIGITS_PATTERN: Regex =
-                    Regex::new("(?P<index>(?P<padding>0*)\\d+)").unwrap();
+                static ref DIGITS_REGEX: Regex =
+                    Regex::new(&*DIGITS_PATTERN).unwrap();
             }
-            compiled_patterns.push(DIGITS_PATTERN.to_owned());
+            compiled_patterns.push(DIGITS_REGEX.to_owned());
         }
     }
 
@@ -307,5 +312,46 @@ mod tests {
             true
         );
         assert_eq!(remainder.contains(&String::from("foo")), true);
+    }
+
+
+    #[test]
+    fn test_assemble_patterns() {
+        let files = vec![
+            "shot/task/main_v001/render.1001.exr",
+            "shot/task/main_v002/render.1001.exr",
+            "shot/task/main_v003/render.1001.exr",
+            "shot/task/main_v001/render.1002.exr",
+            "shot/task/main_v002/render.1002.exr",
+            "shot/task/main_v003/render.1002.exr",
+            "shot/task/main_v001/render.1003.exr",
+            "shot/task/main_v002/render.1003.exr",
+            "shot/task/main_v003/render.1003.exr",
+        ];
+        let (collections, _remainder) = assemble(&files, Some(vec![VERSION_PATTERN.to_string()]));
+        assert_eq!(collections.len(), 3);
+
+        let c1001 = Collection::new(
+            "shot/task/main_v".to_string(),
+            "/render.1001.exr".to_string(),
+            3,
+            vec![1,2,3],
+        );
+        let c1002 = Collection::new(
+            "shot/task/main_v".to_string(),
+            "/render.1002.exr".to_string(),
+            3,
+            vec![1,2,3],
+        );
+        let c1003 = Collection::new(
+            "shot/task/main_v".to_string(),
+            "/render.1003.exr".to_string(),
+            3,
+            vec![1,2,3],
+        );
+
+        assert_eq!(collections.contains(&c1001), true);
+        assert_eq!(collections.contains(&c1002), true);
+        assert_eq!(collections.contains(&c1003), true);
     }
 }
