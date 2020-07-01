@@ -21,7 +21,7 @@ FLAGS:
 
 OPTIONS:
     -f, --format <format>           Optional format of filesequences, default format: "{head}{padding}{tail} [{ranges}]"
-    -p, --patterns <patterns>...    Optional custom pattern for group collections of files, default pattern:
+    -p, --patterns <patterns>...    Optional custom pattern for grouping collections of files, default pattern:
                                     "(?P<index>(?P<padding>0*)\d+)"
 
 ARGS:

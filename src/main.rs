@@ -13,7 +13,7 @@ struct Cli {
     #[structopt(short="f", long="format")]
     format: Option<String>,
 
-    /// Optional custom pattern for group collections of files, default pattern: "(?P<index>(?P<padding>0*)\d+)"
+    /// Optional custom pattern for grouping collections of files, default pattern: "(?P<index>(?P<padding>0*)\d+)"
     #[structopt(short="p", long="patterns")]
     patterns: Option<Vec<String>>,
 
