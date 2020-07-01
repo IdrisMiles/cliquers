@@ -17,3 +17,4 @@ categories = ["data-structures"]
 regex = "1"
 strfmt = "0.1"
 lazy_static = "1.4.0"
+structopt = "0.3.13"

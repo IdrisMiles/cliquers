@@ -21,7 +21,7 @@ impl Collection {
     }
 
     // Return formatted string represented collection.
-    pub fn format(self: &Self, fmt: Option<&str>) -> String {
+    pub fn format<T: AsRef<str>>(self: &Self, fmt: Option<T>) -> String {
         let padding = format!("%0{}d", self.padding);
         let start = self.indexes[0].to_string();
         let end = self.indexes.last().unwrap().to_string();
@@ -44,12 +44,12 @@ impl Collection {
             Some(fmt) => {
                 let mut vars = HashMap::new();
                 let mut holes = String::new();
-                if fmt.contains("{holes}") {
+                if fmt.as_ref().contains("{holes}") {
                     holes.clone_from(&self.holes().format(Some("{range}")));
                     vars.insert("holes".to_string(), holes.as_str());
                 }
 
-                if fmt.contains("{range}") || fmt.contains("{ranges}") {
+                if fmt.as_ref().contains("{range}") || fmt.as_ref().contains("{ranges}") {
                     let indexes_count = self.indexes.len();
                     if indexes_count == 0 {
                         vars.insert("range".to_string(), "");
@@ -59,7 +59,7 @@ impl Collection {
                         vars.insert("range".to_string(), range.as_str());
                     }
                 }
-                if fmt.contains("{ranges}") {
+                if fmt.as_ref().contains("{ranges}") {
                     vars.insert("ranges".to_string(), ranges.as_str());
                 }
 
@@ -69,7 +69,7 @@ impl Collection {
                 vars.insert("start".to_string(), start.as_str());
                 vars.insert("end".to_string(), end.as_str());
 
-                match strfmt(&fmt, &vars) {
+                match strfmt(&fmt.as_ref(), &vars) {
                     Ok(string) => string,
                     Err(_) => "".to_string(),
                 }
@@ -249,7 +249,6 @@ impl Iterator for IntoIteratorHelper {
                 let mut vars = HashMap::new();
                 let padding: usize = self.padding as usize;
                 let index = format!("{:0>padding$}", index.to_string(), padding = padding);
-                println!("{}", index);
 
                 vars.insert("head".to_string(), self.head.as_str());
                 vars.insert("tail".to_string(), self.tail.as_str());
@@ -331,7 +330,7 @@ mod tests {
             vec![1001, 1002, 1003, 1004, 1005],
         );
 
-        assert_eq!(c.format(None), "head.%04d.tail [1001-1005]");
+        assert_eq!(c.format::<&str>(None), "head.%04d.tail [1001-1005]");
         assert_eq!(
             c.format(Some("{head}{padding}{tail} [{range}]")),
             "head.%04d.tail [1001-1005]"
@@ -350,7 +349,7 @@ mod tests {
             vec![1001, 1002, 1003, 1005],
         );
         assert_eq!(c.format(Some("{holes}")), "1004");
-        assert_eq!(c.format(None), "head.%04d.tail [1001-1003, 1005]");
+        assert_eq!(c.format::<&str>(None), "head.%04d.tail [1001-1003, 1005]");
         assert_eq!(
             c.format(Some("{head}{padding}{tail} [{range}]")),
             "head.%04d.tail [1001-1005]"

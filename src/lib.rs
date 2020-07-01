@@ -57,7 +57,6 @@ pub fn assemble<T: AsRef<str>>(
             }
         }
         if !matched {
-            println!("not matched: {}", item.as_ref());
             remainder.push(item.as_ref().to_string());
         }
     }

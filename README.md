@@ -6,6 +6,47 @@ Manage filesequences with a common numeric component in Rust.
 
 ## Usage
 
+Using the commandline
+
+```bash
+$ cliquers --help
+cliquers 0.1.0
+
+USAGE:
+    cliquers [OPTIONS] <path>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -f, --format <format>           Optional format of filesequences, default format: "{head}{padding}{tail} [{ranges}]"
+    -p, --patterns <patterns>...    Optional custom pattern for group collections of files, default pattern:
+                                    "(?P<index>(?P<padding>0*)\d+)"
+
+ARGS:
+    <path>    The path to list files and filesequences under
+```
+```bash
+$ cliquers /shot/task/main
+/shot/task/main/render.%04d.exr [1001-1005]
+
+$ cliquers --format "{head}####{tail}" /shot/task/main
+/shot/task/main/render.####.exr
+
+$ cliquers --patterns "v(?P<index>(?P<padding>0*)\d+)" /shot/task/main
+/shot/task/main/render.1001.exr
+/shot/task/main/render.1002.exr
+/shot/task/main/render.1003.exr
+/shot/task/main/render.1004.exr
+/shot/task/main/render.1005.exr
+
+$ cliquers --patterns "(?P<index>(?P<padding>0*)\d+)" /shot/task/main
+/shot/task/main/render.%04d.exr [1001-1005]
+```
+
+Using the library
+
 ```rust
 use cliquers;
 
