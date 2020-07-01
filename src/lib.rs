@@ -8,7 +8,6 @@ static DIGITS_PATTERN: &str = "(?P<index>(?P<padding>0*)\\d+)";
 static FRAME_PATTERN: &str = "\\.(?P<index>(?P<padding>0*)\\d+)\\.\\D+\\d?$";
 static VERSION_PATTERN: &str = "v(?P<index>(?P<padding>0*)\\d+)";
 
-
 pub fn assemble<T: AsRef<str>>(
     iterable: &Vec<T>,
     patterns: Option<Vec<String>>,
@@ -25,8 +24,7 @@ pub fn assemble<T: AsRef<str>>(
         }
         None => {
             lazy_static! {
-                static ref DIGITS_REGEX: Regex =
-                    Regex::new(&*DIGITS_PATTERN).unwrap();
+                static ref DIGITS_REGEX: Regex = Regex::new(&*DIGITS_PATTERN).unwrap();
             }
             compiled_patterns.push(DIGITS_REGEX.to_owned());
         }
@@ -313,7 +311,6 @@ mod tests {
         assert_eq!(remainder.contains(&String::from("foo")), true);
     }
 
-
     #[test]
     fn test_assemble_patterns() {
         let files = vec![
@@ -334,19 +331,19 @@ mod tests {
             "shot/task/main_v".to_string(),
             "/render.1001.exr".to_string(),
             3,
-            vec![1,2,3],
+            vec![1, 2, 3],
         );
         let c1002 = Collection::new(
             "shot/task/main_v".to_string(),
             "/render.1002.exr".to_string(),
             3,
-            vec![1,2,3],
+            vec![1, 2, 3],
         );
         let c1003 = Collection::new(
             "shot/task/main_v".to_string(),
             "/render.1003.exr".to_string(),
             3,
-            vec![1,2,3],
+            vec![1, 2, 3],
         );
 
         assert_eq!(collections.contains(&c1001), true);
