@@ -10,14 +10,16 @@ Using the commandline
 
 ```bash
 $ cliquers --help
-cliquers 0.1.0
+cliquers 0.2.0
 
 USAGE:
-    cliquers [OPTIONS] <path>
+    cliquers [FLAGS] [OPTIONS] [--] [paths]...
 
 FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+    -h, --help              Prints help information
+    -r, --recurse           Recurse down subdirectories
+    -s, --show-remainder    Print files not in a collection
+    -V, --version           Prints version information
 
 OPTIONS:
     -f, --format <format>           Optional format of filesequences, default format: "{head}{padding}{tail} [{ranges}]"
@@ -25,11 +27,16 @@ OPTIONS:
                                     "(?P<index>(?P<padding>0*)\d+)"
 
 ARGS:
-    <path>    The path to list files and filesequences under
+    <paths>...    The path to list files and filesequences under
 ```
 ```bash
 $ cliquers /shot/task/main
 /shot/task/main/render.%04d.exr [1001-1005]
+
+$ cliquers -r /shot/task
+/shot/task/main/render.%04d.exr [1001-1005]
+/shot/task/foo/render.%04d.exr [1001-1005]
+/shot/task/bar/render.%04d.exr [1001-1005]
 
 $ cliquers --format "{head}####{tail}" /shot/task/main
 /shot/task/main/render.####.exr
