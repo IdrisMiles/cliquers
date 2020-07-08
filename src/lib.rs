@@ -45,7 +45,10 @@ pub fn assemble<T: AsRef<str>>(
                 };
 
                 let key = (head.to_string(), tail.to_string(), padding);
-                let index = index_match.as_str().parse::<i32>().unwrap();
+                let index = match index_match.as_str().parse::<i32>() {
+                    Ok(i) => i,
+                    Err(_) => continue,
+                };
                 if collection_map.contains_key(&key) {
                     collection_map.get_mut(&key).unwrap().push(index)
                 } else {
