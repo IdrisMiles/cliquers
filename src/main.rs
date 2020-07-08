@@ -9,6 +9,10 @@ use walkdir::{DirEntry, WalkDir};
 // List files grouping filesequences together.
 #[derive(StructOpt)]
 struct Cli {
+    /// Print files not in a collection
+    #[structopt(short = "s", long = "show-remainder")]
+    show_remainder: bool,
+
     /// Recurse down subdirectories
     #[structopt(short = "r", long = "recurse")]
     recurse: bool,
@@ -49,8 +53,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                     for c in collections.iter() {
                         println!("{}", c.format(args.format.to_owned()));
                     }
-                    for r in remainders.iter() {
-                        println!("{}", r);
+                    if args.show_remainder {
+                        for r in remainders.iter() {
+                            println!("{}", r);
+                        }
                     }
                 }
             }
@@ -66,8 +72,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                 for c in collections.iter() {
                     println!("{}", c.format(args.format.to_owned()));
                 }
-                for r in remainders.iter() {
-                    println!("{}", r);
+                if args.show_remainder {
+                    for r in remainders.iter() {
+                        println!("{}", r);
+                    }
                 }
             }
         }
