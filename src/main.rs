@@ -4,7 +4,7 @@ use std::fs;
 use std::io;
 use std::path;
 use structopt::StructOpt;
-use walkdir::{DirEntry, WalkDir};
+use walkdir::WalkDir;
 
 // List files grouping filesequences together.
 #[derive(StructOpt)]
