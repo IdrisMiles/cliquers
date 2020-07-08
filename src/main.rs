@@ -4,10 +4,15 @@ use std::fs;
 use std::io;
 use std::path;
 use structopt::StructOpt;
+use walkdir::{DirEntry, WalkDir};
 
 // List files grouping filesequences together.
 #[derive(StructOpt)]
 struct Cli {
+    /// Recurse down subdirectories
+    #[structopt(short = "r", long = "recurse")]
+    recurse: bool,
+
     /// Optional format of filesequences, default format: "{head}{padding}{tail} [{ranges}]"
     #[structopt(short = "f", long = "format")]
     format: Option<String>,
@@ -18,23 +23,54 @@ struct Cli {
 
     /// The path to list files and filesequences under
     #[structopt(parse(from_os_str))]
-    path: path::PathBuf,
+    paths: Vec<path::PathBuf>,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Cli::from_args();
 
-    let entries = fs::read_dir(args.path)?
-        .map(|res| res.map(|e| e.path().to_str().unwrap().to_string()))
-        .collect::<Result<Vec<_>, io::Error>>()?;
+    match args.recurse {
+        true => {
+            for path in args.paths {
+                for dir in WalkDir::new(path)
+                    .into_iter()
+                    .filter_map(|e| e.ok())
+                    .filter_map(|e| match e.file_type().is_dir() {
+                        true => Some(e),
+                        false => None,
+                    })
+                {
+                    let entries = fs::read_dir(dir.path())?
+                        .map(|res| res.map(|e| e.path().to_str().unwrap().to_string()))
+                        .collect::<Result<Vec<_>, io::Error>>()?;
 
-    let (collections, remainders) = cliquers::assemble(&entries, args.patterns);
+                    let (collections, remainders) =
+                        cliquers::assemble(&entries, args.patterns.to_owned());
+                    for c in collections.iter() {
+                        println!("{}", c.format(args.format.to_owned()));
+                    }
+                    for r in remainders.iter() {
+                        println!("{}", r);
+                    }
+                }
+            }
+        }
+        false => {
+            for path in args.paths {
+                let entries = fs::read_dir(path)?
+                    .map(|res| res.map(|e| e.path().to_str().unwrap().to_string()))
+                    .collect::<Result<Vec<_>, io::Error>>()?;
 
-    for c in collections.iter() {
-        println!("{}", c.format(args.format.to_owned()));
-    }
-    for r in remainders.iter() {
-        println!("{}", r);
+                let (collections, remainders) =
+                    cliquers::assemble(&entries, args.patterns.to_owned());
+                for c in collections.iter() {
+                    println!("{}", c.format(args.format.to_owned()));
+                }
+                for r in remainders.iter() {
+                    println!("{}", r);
+                }
+            }
+        }
     }
 
     Ok(())
